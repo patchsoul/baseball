@@ -1,5 +1,8 @@
 <html>
 <style>
+input {
+font-family: "Monospace"
+}
 .base {
 clear:left;
 width:256pt;
@@ -26,7 +29,7 @@ border-radius:5px;
 }
 code, pre {
 background-color:#eee;
-padding:2pt;
+padding:1pt;
 border-radius:2px;
 }
 </style>
@@ -38,16 +41,23 @@ You can calculate things using postfix notation, e.g.
 Becomes 0.75, and so on.  The basic operators are:
 <pre> * / - +</pre>
 Though a minus sign (-) preceding a valid number becomes a unary minus
-(negating that number).</p>
+(negating that number).  Open up the console (<code>F12</code>) to see what's
+going on internally with the stack.</p>
+<p>Balanced numbers are given with a negative base in the Choose Base input
+(providing the largest-magnitude negative digit, though the actual base is one
+minus twice that), with negative character digits given by the odd indices: 
+<code>0, -1, 1, -2, 2</code>, etc.  For example, the default balanced ternary
+characters are <code>O, M, P</code>, corresponding to 0, -1, and 1 digits.</p>
+<p>Special numbers:  <code>Ctrl+e</code> to input e=2.71828,
+and <code>Ctrl+p</code> to input pi=3.14159.</p>
 <p>Also beware of roundoff error; numbers are stored in floating point format,
 so the lowest digits might be telephone numbers.  For example,
 typing in 0.75 into the decimal input will give you an inexact representation
 (due to how the conversion is performed), but typing 0.11 into the binary input
 will give you the exact representation (or use <code>3 4 /</code>).</p>
-<p>Special numbers:  <code>Ctrl+e</code> to input e=2.71828,
-and <code>Ctrl+p</code> to input pi=3.14159.</p>
 <p>Report bugs <a href="https://github.com/patchsoul/baseball/issues">here</a>
-or drop me a line.  Check the console for helpful information.
+or drop me a line.  Round-off error is not a bug.
+Check the console for helpful information.
 </p></details>
 <div id="DivInput"></div>
 <div id="DivStack"></div>
@@ -180,7 +190,36 @@ function write(i, value) {
     if (value == 0) {
         buffer.push(base[i].characters[0]);
     } else if (base[i].value < 0) { // balanced
-        // TODO: do balanced arithmetic
+        var baseMultiple = 1 - base[i].value*2;
+        var copy = Math.round(value);
+        value -= copy;
+        while (copy) {
+            var sign = (copy < 0) ? -1 : 1;
+            var absval = sign*copy;
+            if (absval > -base[i].value) {
+                var div = Math.floor(absval / baseMultiple); // divide
+                var digit = absval % baseMultiple; // remainder
+                if (digit > -base[i].value) { // digit too big
+                    ++div; // carry it up stream
+                    digit -= baseMultiple;
+                }
+                copy = sign*div;
+                absval = sign*digit;
+                if (absval < 0)
+                    buffer.push(base[i].characters[-2*absval-1]);
+                else
+                    buffer.push(base[i].characters[2*absval]);
+            } else { // we're finished here...
+                buffer.push(base[i].characters[2*absval+(sign-1)/2]);
+                copy = 0;
+            }
+        }
+        buffer.reverse();
+        if (value) {
+            if (buffer.length == 0)
+                buffer.push(base[i].characters[0]);
+            buffer.push('.');
+        }
     } else { // normal
         if (value < 0) {
             buffer.push('-');
@@ -199,13 +238,18 @@ function write(i, value) {
             copy = Math.floor(copy / base[i].value);
         }
         if (value) {
-            if (buffer.length == 0 || buffer[0] == '-')
-                buffer.push('0.');
-            else
-                buffer.push('.');
-            while (value && buffer.length < 41/Math.log(base[i].value)) {
+            if (buffer.length == 0 || (buffer.length == 1 && buffer[0] == '-'))
+                buffer.push(base[i].characters[0]);
+            buffer.push('.');
+            var maxBuffer = 41/Math.log(base[i].value);
+            while (value && buffer.length < maxBuffer) {
                 value *= base[i].value;
                 var digit = Math.floor(value);
+                if ((value - digit > 0.99999999999) && (digit + 1 < base[i].value)) {
+                    ++digit;
+                    buffer.push(base[i].characters[digit]);
+                    break;
+                }
                 buffer.push(base[i].characters[digit]);
                 value -= digit;
             }
@@ -308,20 +352,20 @@ function newBaseInput(i) {
         label = document.createElement("label");
         label.for = "ChooseBase";
         label.innerHTML = "Base:&nbsp;&nbsp;";
-        input = document.createElement("input");
-        input.type = "text";
-        input.maxLength = 2;
-        input.id = "ChooseBase";
-        input.value = base[i].value;
-        input.onblur = function () {
-            var val = parseInt(input.value);
+        var input2 = document.createElement("input");
+        input2.type = "text";
+        input2.maxLength = 2;
+        input2.id = "ChooseBase";
+        input2.value = base[i].value;
+        input2.onblur = function () {
+            var val = parseInt(input2.value);
             if (isNaN(val) || val == 0 || val == 1) {
                 error("bad base value (pick < 0 for balanced, or > 1 for regular)");
-                input.value = base[i].value;
+                input2.value = base[i].value;
                 return;
             }
             if (val > DefaultCharacters.length) {
-                input.value = val = DefaultCharacters.length;
+                input2.value = val = DefaultCharacters.length;
             }
             var count = val < 0 ? 1-2*val : val;
             var oldCount = base[i].value < 0 ? 1-2*base[i].value : base[i].value;
@@ -334,16 +378,20 @@ function newBaseInput(i) {
                     characters.removeChild(characters.lastChild);
                     ++diff;
                 }
-                return;
+            } else {
+                while (diff > 0) {
+                    characters.appendChild(newCharacterInput(i, oldCount));
+                    ++oldCount;
+                    --diff;
+                }
             }
-            while (diff > 0) {
-                characters.appendChild(newCharacterInput(i, oldCount));
-                ++oldCount;
-                --diff;
+            // update ChooseInput by writing TOS there, if it exists
+            if (stack.length) {
+                input.value = write(i, stack[stack.length-1]);
             }
         }
         div.appendChild(label);
-        div.appendChild(input);
+        div.appendChild(input2);
     }
     div.append(characters);
     return div;

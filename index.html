@@ -4,7 +4,7 @@ input {
 font-family: "Monospace"
 }
 .base {
-clear:left;
+float:left;
 width:256pt;
 padding:5pt;
 }
@@ -26,6 +26,7 @@ background-color:#ffa;
 width:256pt;
 padding:5pt;
 border-radius:5px;
+float:left;
 }
 code, pre {
 background-color:#eee;
@@ -35,7 +36,7 @@ border-radius:2px;
 </style>
 <h3>Mathematic League Baseball</h3>
 <details>
-<summary>Calculator Help And Other Stuff</summary><p>
+<summary>CHAOS: Calculator Help And Other Stuff</summary><p>
 You can calculate things using postfix notation, e.g.
 <pre> 3 4 /</pre>
 Becomes 0.75, and so on.  The basic operators are:
@@ -245,11 +246,6 @@ function write(i, value) {
             while (value && buffer.length < maxBuffer) {
                 value *= base[i].value;
                 var digit = Math.floor(value);
-                if ((value - digit > 0.99999999999) && (digit + 1 < base[i].value)) {
-                    ++digit;
-                    buffer.push(base[i].characters[digit]);
-                    break;
-                }
                 buffer.push(base[i].characters[digit]);
                 value -= digit;
             }

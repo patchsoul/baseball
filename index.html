@@ -1,3 +1,159 @@
 <html>
+<style>
+.base {
+clear:left;
+padding:5pt;
+}
+.number {
+display:block;
+clear:left;
+width:256pt;
+}
+#ChooseBase {
+width:32pt;
+}
+.character {
+display:block;
+width:16pt;
+float:left;
+}
+</style>
 <h3>Mathematical Baseball</h3>
+<div id="DivInput"></div>
+<div id="DivStack"></div>
+<script>
+var base = [
+    // keep Decimal first
+    { name : "Decimal", value : 10, characters : [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' ] },
+    { name : "Octal", value : 8, characters : [ '0', '1', '2', '3', '4', '5', '6', '7' ] }, 
+    { name : "Hexadecimal", value : 16, characters : [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' ]  }, 
+    { name : "Binary", value : 2, characters : [ '0', '1' ] }, 
+    { name : "Ternary", value : 3, characters : [ '0', '1', '2' ] }, 
+    { name : "Dozenal", value : 12, characters : [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'X', 'N' ] }, 
+    { name : "Balanced Ternary", value : -1, characters : [ 'M', 'O', 'P' ] }, 
+    { name : "Choose", value : 6, characters : [ '0', '1', '2', '3', '4', '5' ] }
+];
+var DefaultCharacters = [ 
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+];
+function onBlur(i) {
+    console.log("got blur", i);
+    if (i == 0) {
+
+    } else {
+
+    }
+    var j=1;
+    for (; j<i; ++j) {
+
+    }
+    ++j;
+    for (; j<base.length; ++j) {
+
+    }
+}
+function newCharacterInput(i, j) {
+    var input = document.createElement("input");
+    input.type = "text";
+    input.maxLength = 1;
+    input.className = "character";
+    if (j >= base[i].characters.length) {
+        input.value = DefaultCharacters[j];
+    } else {
+        input.value = base[i].characters[j]
+    }
+    input.onblur = function () {
+        if (j >= base[i].characters.length) {
+            while (base[i].characters.length < j) {
+                base[i].characters.push(DefaultCharacters[base[i].characters.length]);
+            }
+            base[i].characters.push(input.value[0]);
+        } else {
+            base[i].characters[j] = input.value[0];
+        }
+    }
+    return input;
+}
+function newBaseInput(i) {
+    var div = document.createElement("div");
+    div.className = "base";
+    if (base[i].value == 0 || base[i].value == 1) {
+        window.alert("bad base, need base < 0 or base > 1");
+        return div;     
+    }
+    var label = document.createElement("label");
+    var input = document.createElement("input");
+    input.type = "text";
+    input.value = "";
+    input.className = "number";
+    label.innerHTML = base[i].name + ":";
+    input.id = label.for = "Input"+base[i].name;
+    input.onblur = function () { onBlur(i); };
+    div.appendChild(label);
+    div.appendChild(input);
+    var characters = document.createElement("div");
+    var count = base[i].value < 0 ? 1-2*base[i].value : base[i].value;
+    for (var j=0; j<count; ++j) {
+        characters.appendChild(newCharacterInput(i, j));
+    }
+    if (base[i].name === "Choose") {
+        label = document.createElement("label");
+        label.for = "ChooseBase";
+        label.innerHTML = "Base:&nbsp;&nbsp;";
+        input = document.createElement("input");
+        input.type = "text";
+        input.id = "ChooseBase";
+        input.value = base[i].value;
+        input.oldValue = base[i].value;
+        input.onblur = function () {
+            var val = parseInt(input.value);
+            if (isNaN(val) || val == 0 || val == 1) {
+                window.alert("bad base value");
+                input.value = input.oldValue;
+                return;
+            }
+            if (val > DefaultCharacters.length) {
+                input.value = val = DefaultCharacters.length;
+            }
+            var diff = val - input.oldValue;
+            var j = input.oldValue;
+            input.oldValue = val;
+            if (diff === 0) {
+                return;
+            } else if (diff < 0) {
+                while (diff < 0) {
+                    characters.removeChild(characters.lastChild);
+                    ++diff;
+                }
+                return;
+            }
+            while (diff > 0) {
+                characters.appendChild(newCharacterInput(i, j));
+                ++j;
+                --diff;
+            }
+        }
+        div.appendChild(label);
+        div.appendChild(input);
+    }
+    div.append(characters);
+    return div;
+}
+var DivInput = document.getElementById("DivInput");
+for (var i=0; i<base.length; ++i) {
+    DivInput.appendChild(newBaseInput(i));
+}
+document.onkeydown = function(evt) {
+  if (evt.keyCode == 27) {
+    document.activeElement.blur(); // defocus from current element
+  } else if (evt.keyCode == 13) { // if we press enter...
+    // don't let enter execute submit
+    evt.preventDefault();
+    document.activeElement.blur(); // defocus from current element
+    return false;
+  }
+};
+</script>
 </html>

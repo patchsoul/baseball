@@ -18,8 +18,37 @@ display:block;
 width:16pt;
 float:left;
 }
+details {
+background-color:#ffa;
+width:256pt;
+padding:5pt;
+border-radius:5px;
+}
+code, pre {
+background-color:#eee;
+padding:2pt;
+border-radius:2px;
+}
 </style>
-<h3>Mathematical Baseball</h3>
+<h3>Mathematic League Baseball</h3>
+<details>
+<summary>Calculator Help And Other Stuff</summary><p>
+You can calculate things using postfix notation, e.g.
+<pre> 3 4 /</pre>
+Becomes 0.75, and so on.  The basic operators are:
+<pre> * / - +</pre>
+Though a minus sign (-) preceding a valid number becomes a unary minus
+(negating that number).</p>
+<p>Also beware of roundoff error; numbers are stored in floating point format,
+so the lowest digits might be telephone numbers.  For example,
+typing in 0.75 into the decimal input will give you an inexact representation
+(due to how the conversion is performed), but typing 0.11 into the binary input
+will give you the exact representation (or use <code>3 4 /</code>).</p>
+<p>Special numbers:  <code>Ctrl+e</code> to input e=2.71828,
+and <code>Ctrl+p</code> to input pi=3.14159.</p>
+<p>Report bugs <a href="https://github.com/patchsoul/baseball/issues">here</a>
+or drop me a line.  Check the console for helpful information.
+</p></details>
 <div id="DivInput"></div>
 <div id="DivStack"></div>
 <script>
@@ -91,7 +120,7 @@ var Operators = {
 };
 function calculate(msg, i) {
     stack.length = 0;
-    console.log("got blur", i, "; msg = ", msg);
+    console.log("calculating for input", i, "; content = ", msg);
     var j = 0;
     while (j < msg.length) {
         if (msg[j] == ' ') {
@@ -145,7 +174,6 @@ function calculate(msg, i) {
             ++j;
         }
     }
-    var nextResult = 0;
 }
 function write(i, value) {
     var buffer = [];
@@ -171,11 +199,14 @@ function write(i, value) {
             copy = Math.floor(copy / base[i].value);
         }
         if (value) {
-            buffer.push('.');
-            while (value && buffer.length < 18) {
+            if (buffer.length == 0 || buffer[0] == '-')
+                buffer.push('0.');
+            else
+                buffer.push('.');
+            while (value && buffer.length < 41/Math.log(base[i].value)) {
                 value *= base[i].value;
                 var digit = Math.floor(value);
-                buffer.push(digit);
+                buffer.push(base[i].characters[digit]);
                 value -= digit;
             }
         }
@@ -251,6 +282,7 @@ function newBaseInput(i) {
     input.className = "number";
     label.innerHTML = base[i].name + ":";
     input.id = label.for = "Input"+base[i].name;
+    input.baseIndex = i;
     input.onblur = function () { 
         calculate(this.value, i); 
         if (stack.length === 0) {
@@ -278,6 +310,7 @@ function newBaseInput(i) {
         label.innerHTML = "Base:&nbsp;&nbsp;";
         input = document.createElement("input");
         input.type = "text";
+        input.maxLength = 2;
         input.id = "ChooseBase";
         input.value = base[i].value;
         input.onblur = function () {
@@ -327,6 +360,22 @@ document.onkeydown = function(evt) {
     evt.preventDefault();
     document.activeElement.blur(); // defocus from current element
     return false;
+  } else if (evt.ctrlKey) {
+    if (evt.key == "e") {
+        evt.preventDefault();
+        if (document.activeElement.baseIndex !== undefined) {
+            if (document.activeElement.value)
+                document.activeElement.value += " ";
+            document.activeElement.value += write(document.activeElement.baseIndex, Math.E);
+        }
+    } else if (evt.key == "p") {
+        evt.preventDefault();
+        if (document.activeElement.baseIndex !== undefined) {
+            if (document.activeElement.value)
+                document.activeElement.value += " ";
+            document.activeElement.value += write(document.activeElement.baseIndex, Math.PI);
+        }
+    }
   }
 };
 </script>

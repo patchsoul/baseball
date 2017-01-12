@@ -204,7 +204,6 @@ function newCharacterInput(i, j) {
             }
             base[i].characters.push(v);
         } else {
-            console.log("got j = ", j);
             base[i].characters[j] = v;
         }
         base[i].lookup = {};
@@ -253,7 +252,7 @@ function newBaseInput(i) {
     label.innerHTML = base[i].name + ":";
     input.id = label.for = "Input"+base[i].name;
     input.onblur = function () { 
-        calculate(input.value, i); 
+        calculate(this.value, i); 
         if (stack.length === 0) {
             error("nothing in the stack.");
             return;

@@ -121,9 +121,10 @@ function calculate(msg, i) {
                 if (j >= msg.length || msg[j] != separator) {
                     stack.push(result*sign);
                     stack_alert("");
-                    ++j;
                     continue;
                 }
+                // otherwise, we have a period, so go past that
+                ++j;
             }
             var below = 1.0;
             while (j < msg.length && base[i].lookup[msg[j]] !== undefined) {
@@ -131,6 +132,8 @@ function calculate(msg, i) {
                 result += base[i].lookup[msg[j]][Math.floor(Math.random()*base[i].lookup[msg[j]].length)]*below;
                 ++j;
             }
+            stack.push(result*sign);
+            stack_alert("");
         } else  {
             var fn = Operators[msg[j]];
             if (fn === undefined) {
@@ -145,7 +148,6 @@ function calculate(msg, i) {
     var nextResult = 0;
 }
 function write(i, value) {
-    console.log("writing value", value, "to", i);
     var buffer = [];
     if (value == 0) {
         buffer.push(base[i].characters[0]);
@@ -161,16 +163,22 @@ function write(i, value) {
             buffer.push('?');
             copy = Math.floor(copy / base[i].value);
         }
-        console.log("got fill buffer", buffer.length);
-        var j=buffer.length;
+        var j = buffer.length;
         copy = Math.floor(value);
         value -= copy;
         while (copy > 0) {
             buffer[--j] = base[i].characters[copy % base[i].value];
             copy = Math.floor(copy / base[i].value);
-            console.log("digit", buffer[j]);
         }
-        // TODO: do stuff after decimal point
+        if (value) {
+            buffer.push('.');
+            while (value && buffer.length < 18) {
+                value *= base[i].value;
+                var digit = Math.floor(value);
+                buffer.push(digit);
+                value -= digit;
+            }
+        }
     }
     return buffer.join("");
 }
@@ -246,6 +254,7 @@ function newBaseInput(i) {
             error("more than one thing left in the stack, taking last element.");
         }
         var value = stack[stack.length-1];
+        console.log("writing value", value, "to all");
         for (var j=0; j<base.length; ++j) {
             document.getElementById("Input"+base[j].name).value = write(j, value);
         }

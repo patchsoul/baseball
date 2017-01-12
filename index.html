@@ -204,28 +204,35 @@ function newCharacterInput(i, j) {
             }
             base[i].characters.push(v);
         } else {
+            console.log("got j = ", j);
             base[i].characters[j] = v;
         }
         base[i].lookup = {};
         var baseMultiple;
         if (base[i].value < 0) {
             base[i].lookup[base[i].characters[0]] = [0];
-            for (var j=1; j <= -base[i].value; ++j) {
-                if (base[i].lookup[base[i].characters[2*j-1]] === undefined)
-                    base[i].lookup[base[i].characters[2*j-1]] = [-j];
-                else
-                    base[i].lookup[base[i].characters[2*j-1]].push(-j);
-                if (base[i].lookup[base[i].characters[2*j]] === undefined)
-                    base[i].lookup[base[i].characters[2*j]] = [j];
-                else
-                    base[i].lookup[base[i].characters[2*j]].push(j);
+            for (var k=1; k <= -base[i].value; ++k) {
+                if (base[i].lookup[base[i].characters[2*k-1]] === undefined)
+                    base[i].lookup[base[i].characters[2*k-1]] = [-k];
+                else {
+                    base[i].lookup[base[i].characters[2*k-1]].push(-k);
+                    error("multiple values for character "+base[i].characters[2*k-1]+": "+base[i].lookup[base[i].characters[2*k-1]]);
+                }
+                if (base[i].lookup[base[i].characters[2*k]] === undefined)
+                    base[i].lookup[base[i].characters[2*k]] = [k];
+                else {
+                    base[i].lookup[base[i].characters[2*k]].push(k);
+                    error("multiple values for character "+base[i].characters[2*k] +": "+ base[i].lookup[base[i].characters[2*k]]);
+                }
             }
         } else {
-            for (var j=0; j < base[i].value; ++j) {
-                if (base[i].lookup[base[i].characters[j]] === undefined)
-                    base[i].lookup[base[i].characters[j]] = [j];
-                else
-                    base[i].lookup[base[i].characters[j]].push(j);
+            for (var k=0; k < base[i].value; ++k) {
+                if (base[i].lookup[base[i].characters[k]] === undefined)
+                    base[i].lookup[base[i].characters[k]] = [k];
+                else {
+                    base[i].lookup[base[i].characters[k]].push(k);
+                    error("multiple values for character "+ base[i].characters[k] +": "+ base[i].lookup[base[i].characters[k]]);
+                }
             }
         }
     }

@@ -62,20 +62,31 @@ if (help) {
     "(due to how the conversion is performed), but typing 0.11 into the binary input "+
     "will give you the exact representation (or use <code>3 4 /</code>).</p>"+
     "<p>Report bugs <a href=\"https://github.com/patchsoul/baseball/issues\">here</a> "+
-    "or drop me a line.  Round-off error is not a bug."+
+    "or drop me a line.  Round-off error is not a bug. "+
     "Check the console for helpful information.</p>"
     element.appendChild(innerElement);
     help.append(element);
 }
 var stack = [];
+var StackDiv = document.getElementById("BaseCalculatorStack");
+function add_message(text, style) {
+    if (!StackDiv) return;
+    var newcode = document.createElement("pre");
+    newcode.className = style;
+    newcode.innerHTML = text;
+    StackDiv.appendChild(newcode);
+}
 function error(msg) {
     console.error(msg);
+    add_message(msg, "stackError");
 }
 function stack_alert(msg) {
     if (msg)
-        console.log("stack: ", stack.join(), "after", msg);
+        msg = "stack: ["+stack.join(" ")+"] after "+msg;
     else
-        console.log("stack: ", stack.join());
+        msg = "stack: ["+stack.join(" ")+"]";
+    console.log(msg);
+    add_message(msg, "stackNormal");
 }
 var Operators = {
     '*' : function () {
@@ -132,11 +143,20 @@ var Operators = {
 };
 function calculate(msg, i) {
     stack.length = 0;
-    console.log("calculating for input", i, "; content = ", msg);
+    if (StackDiv) {
+        while (StackDiv.lastChild)
+            StackDiv.removeChild(StackDiv.lastChild);
+    }
+    if (base[i].value < 0)
+        add_message("calculating input '"+msg+"' with balanced base "+(1-2*base[i].value), "stackNormal");
+    else
+        add_message("calculating input '"+msg+"' with base "+base[i].value, "stackNormal");
+    var jstart = 0;
     var j = 0;
     while (j < msg.length) {
         if (msg[j] == ' ') {
             ++j;
+            jstart = j;
             continue;
         }
         var sign = 1;
@@ -161,7 +181,8 @@ function calculate(msg, i) {
                 }
                 if (j >= msg.length || msg[j] != separator) {
                     stack.push(result*sign);
-                    stack_alert("");
+                    stack_alert(msg.substring(jstart, j));
+                    jstart = j;
                     continue;
                 }
                 // otherwise, we have a period, so go past that
@@ -174,12 +195,14 @@ function calculate(msg, i) {
                 ++j;
             }
             stack.push(result*sign);
-            stack_alert("");
+            stack_alert(msg.substring(jstart, j));
+            jstart = j;
         } else  {
             var fn = Operators[msg[j]];
             if (fn === undefined) {
-                error("Unknown letter: "+msg[j]);
+                error("unknown character: "+msg[j]);
                 ++j;
+                jstart = j;
                 continue;
             }
             fn();

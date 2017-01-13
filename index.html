@@ -3,6 +3,11 @@
 input {
 font-family: "Monospace"
 }
+#BaseCalculator {
+display:block;
+width:auto;
+height:auto;
+}
 .base {
 float:left;
 width:256pt;
@@ -33,10 +38,31 @@ background-color:#eee;
 padding:1pt;
 border-radius:2px;
 }
+#BaseCalculatorStack {
+clear:left;
+display:block;
+padding:5pt;
+background-color:#faa;
+border-radius:2px;
+}
+.stackError {
+margin:0;
+background-color:#bcf;
+border-radius:0;
+}
+.stackNormal {
+margin:0;
+background-color:#dde;
+border-radius:0;
+}
+a {
+color: #910;
+text-decoration:none;
+}
 </style>
 <h3>Mathematic League Baseball</h3>
 <div id="BaseCalculatorHelp"></div>
-<div id="BaseCalculator"</div>
+<div id="BaseCalculator"></div>
 <div id="BaseCalculatorStack"></div>
 <script src="calculator.js"></script>
 </html>

@@ -186,40 +186,58 @@ function calculate(msg, i) {
         }
     }
 }
+function bufferBalanced(i, copy) {
+    var buffer = [];
+    var baseMultiple = 1 - base[i].value*2;
+    while (copy) {
+        var sign = (copy < 0) ? -1 : 1;
+        var absval = sign*copy;
+        if (absval > -base[i].value) {
+            var div = Math.floor(absval / baseMultiple); // divide
+            var digit = absval % baseMultiple; // remainder
+            if (digit > -base[i].value) { // digit too big
+                ++div; // carry it up stream
+                digit -= baseMultiple;
+            }
+            copy = sign*div;
+            absval = sign*digit;
+            if (absval < 0)
+                buffer.push(base[i].characters[-2*absval-1]);
+            else
+                buffer.push(base[i].characters[2*absval]);
+        } else { // we're finished here...
+            buffer.push(base[i].characters[2*absval+(sign-1)/2]);
+            copy = 0;
+        }
+    }
+    return buffer.reverse();
+}
+
 function write(i, value) {
     var buffer = [];
     if (value == 0) {
         buffer.push(base[i].characters[0]);
     } else if (base[i].value < 0) { // balanced
         var baseMultiple = 1 - base[i].value*2;
-        var copy = Math.round(value);
-        value -= copy;
-        while (copy) {
-            var sign = (copy < 0) ? -1 : 1;
-            var absval = sign*copy;
-            if (absval > -base[i].value) {
-                var div = Math.floor(absval / baseMultiple); // divide
-                var digit = absval % baseMultiple; // remainder
-                if (digit > -base[i].value) { // digit too big
-                    ++div; // carry it up stream
-                    digit -= baseMultiple;
+        var rounded = Math.round(value);
+        buffer = bufferBalanced(i, Math.round(value));
+        if (value-rounded) {
+            var length = buffer.length;
+            var maxBuffer = 42/Math.log(baseMultiple);
+            var maxShift = maxBuffer - length;
+            if (maxShift > 0) {
+                var shift = 0;
+                for (; shift < maxShift; ++shift) {
+                    value *= baseMultiple;
+                    if (Math.round(value) == value) {
+                        break;
+                    }
                 }
-                copy = sign*div;
-                absval = sign*digit;
-                if (absval < 0)
-                    buffer.push(base[i].characters[-2*absval-1]);
-                else
-                    buffer.push(base[i].characters[2*absval]);
-            } else { // we're finished here...
-                buffer.push(base[i].characters[2*absval+(sign-1)/2]);
-                copy = 0;
+                buffer = bufferBalanced(i, Math.round(value));
+                buffer.splice(length, 0, '.');
+            } else {
+                buffer.push('.'); 
             }
-        }
-        buffer.reverse();
-        if (value) {
-            if (buffer.length == 0)
-                buffer.push(base[i].characters[0]);
-            buffer.push('.');
         }
     } else { // normal
         if (value < 0) {
@@ -242,7 +260,7 @@ function write(i, value) {
             if (buffer.length == 0 || (buffer.length == 1 && buffer[0] == '-'))
                 buffer.push(base[i].characters[0]);
             buffer.push('.');
-            var maxBuffer = 41/Math.log(base[i].value);
+            var maxBuffer = 42/Math.log(base[i].value);
             while (value && buffer.length < maxBuffer) {
                 value *= base[i].value;
                 var digit = Math.floor(value);
@@ -402,7 +420,9 @@ document.onkeydown = function(evt) {
   } else if (evt.keyCode == 13) { // if we press enter...
     // don't let enter execute submit
     evt.preventDefault();
-    document.activeElement.blur(); // defocus from current element
+    var active = document.activeElement;
+    active.blur(); // defocus from current element
+    active.focus(); // refocus
     return false;
   } else if (evt.ctrlKey) {
     if (evt.key == "e") {

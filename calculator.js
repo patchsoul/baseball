@@ -41,8 +41,7 @@ if (help) {
     "Becomes 0.75, and so on.  The basic operators are: "+
     "<pre> * / - +</pre> "+
     "Though a minus sign (-) preceding a valid number becomes a unary minus "+
-    "(negating that number).  Open up the console (<code>F12</code>) to see what's "+
-    "going on internally with the stack.</p>"+
+    "(negating that number).  Look at the stack box for what's going on internally with the calculator.</p>"+
     "<p>More complicated operators: "+
     "<pre> ^ _ ~</pre> "+
     "The caret <code>^</code> is exponentiation, not binary XOR (<code>3 4 ^</code> gives 81, not 7), "+

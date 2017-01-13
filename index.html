@@ -44,10 +44,16 @@ Becomes 0.75, and so on.  The basic operators are:
 Though a minus sign (-) preceding a valid number becomes a unary minus
 (negating that number).  Open up the console (<code>F12</code>) to see what's
 going on internally with the stack.</p>
-<p>Balanced numbers are given with a negative base in the Choose Base input
+<p>More complicated operators:
+<pre> ^ _ ~</pre>
+The caret <code>^</code> is exponentiation, not binary XOR (<code>3 4 ^</code> gives 81, not 7),
+and the underscore <code>_</code> is a base-specified logarithm (<code>3 4 _</code> gives 1.26, i.e., <code>3 1.26 ^</code> gives 4).  Finally,
+<code>~</code> swaps the top two elements on the stack.
+<p>Balanced numbers are given with a negative base in the Choose&rarr;Base input
 (providing the largest-magnitude negative digit, though the actual base is one
-minus twice that), with negative character digits given by the odd indices: 
-<code>0, -1, 1, -2, 2</code>, etc.  For example, the default balanced ternary
+minus twice that), with negative character digits given by the odd indices,
+e.g., <code>0, -1, 1, -2, 2</code> for a "Base -2" (actually Balanced Base 5).  
+As a complete example, the default balanced ternary
 characters are <code>O, M, P</code>, corresponding to 0, -1, and 1 digits.</p>
 <p>Special numbers:  <code>Ctrl+e</code> to input e=2.71828,
 and <code>Ctrl+p</code> to input pi=3.14159.</p>
@@ -87,7 +93,7 @@ var DefaultCharacters = [
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    '_', '!', '@', '$', '(', ')', '[', ']', '{', '}'
+    '`', "'", '"', '!', '@', '$', '(', ')', '[', ']', '{', '}'
 ];
 function error(msg) {
     console.error(msg);
@@ -127,7 +133,30 @@ var Operators = {
         stack[stack.length-2] -= stack[stack.length-1];
         stack.pop();
         stack_alert("-");
-    }
+    },
+    '^' : function () {
+        if (stack.length <= 1)
+            return error("Not enough numbers on stack, this is POSTFIX (use \"3 4 ^\").");
+        stack[stack.length-2] = Math.pow(stack[stack.length-2], stack[stack.length-1]);
+        stack.pop();
+        stack_alert("^");
+    },
+    '_' : function () {
+        if (stack.length <= 1)
+            return error("Not enough numbers on stack, this is POSTFIX (use \"3 4 _\").");
+        stack[stack.length-2] = Math.log(stack[stack.length-1]) / Math.log(stack[stack.length-2]);
+        stack.pop();
+        stack_alert("_");
+    },
+    '~' : function () {
+        if (stack.length <= 1)
+            return error("Not enough numbers on stack, this is POSTFIX (use \"3 4 ~\").");
+        var swap = stack[stack.length-2];
+        stack[stack.length-2] = stack[stack.length-1];
+        stack[stack.length-1] = swap;
+        // don't pop here
+        stack_alert("~");
+    },
 };
 function calculate(msg, i) {
     stack.length = 0;
